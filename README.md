@@ -355,4 +355,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Credits
 
-**Developer**: George Ayomide Erebosi
+**Developer**: Favour Itunnu Babalola
