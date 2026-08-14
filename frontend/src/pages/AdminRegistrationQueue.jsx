@@ -201,7 +201,7 @@ const AdminRegistrationQueue = () => {
                   onClick={() => navigate('/admin/batches', { state: { selectedIds: selectedRegistrations } })}
                   className="btn-primary text-xs sm:text-sm px-3 sm:px-4"
                 >
-                  Choose Existing Batch ({selectedRegistrations.length})
+                  Choose or Create Batch ({selectedRegistrations.length})
                 </button>
               )}
             </div>
@@ -362,7 +362,7 @@ const AdminRegistrationQueue = () => {
                             onClick={() => navigate('/admin/batches', { state: { selectedIds: [registration.id] } })}
                             className="text-primary-600 hover:text-primary-900"
                           >
-                            Choose Batch
+                            Choose or Create Batch
                           </button>
                         )}
                         {status === 'ready' && (
@@ -450,7 +450,7 @@ const AdminRegistrationQueue = () => {
                         onClick={() => navigate('/admin/batches', { state: { selectedIds: [registration.id] } })}
                         className="flex-1 bg-primary-100 text-primary-800 px-3 py-2 rounded-lg text-sm font-medium hover:bg-primary-200"
                       >
-                        Choose Batch
+                        Choose or Create Batch
                       </button>
                     )}
                     {status === 'ready' && (
