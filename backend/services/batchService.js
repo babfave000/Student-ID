@@ -2,15 +2,13 @@ const fs = require('fs');
 const fsp = fs.promises;
 const os = require('os');
 const path = require('path');
-const { promisify } = require('util');
-const { execFile } = require('child_process');
+const { ZipArchive } = require('archiver');
 const Batch = require('../models/Batch');
 const Registration = require('../models/Registration');
 const WorkflowService = require('./workflowService');
 const AuditLog = require('../models/AuditLog');
+const { resolveUploadPathFromPublicPath } = require('../config/storage');
 const logger = require('../utils/logger');
-
-const execFileAsync = promisify(execFile);
 
 class BatchService {
   static async createBatch(batchData, userId) {
@@ -309,10 +307,9 @@ class BatchService {
           continue;
         }
 
-        const relativePhotoPath = registration.photo_path.replace(/^\/+/, '').split('/').join(path.sep);
-        const sourcePath = path.resolve(__dirname, '..', relativePhotoPath);
+        const sourcePath = resolveUploadPathFromPublicPath(registration.photo_path);
 
-        if (!fs.existsSync(sourcePath)) {
+        if (!sourcePath || !fs.existsSync(sourcePath)) {
           logger.error(`Photo file not found for registration ${registration.id}: ${sourcePath}`);
           continue;
         }
@@ -351,17 +348,18 @@ class BatchService {
   }
 
   static async createZipArchive(sourceFolderPath, zipPath) {
-    const escapedSource = sourceFolderPath.replace(/'/g, "''");
-    const escapedZip = zipPath.replace(/'/g, "''");
+    await new Promise((resolve, reject) => {
+      const output = fs.createWriteStream(zipPath);
+      const archive = new ZipArchive({ zlib: { level: 9 } });
 
-    await execFileAsync('powershell.exe', [
-      '-NoProfile',
-      '-NonInteractive',
-      '-ExecutionPolicy',
-      'Bypass',
-      '-Command',
-      `Compress-Archive -Path '${escapedSource}' -DestinationPath '${escapedZip}' -Force`
-    ]);
+      output.on('close', resolve);
+      output.on('error', reject);
+      archive.on('error', reject);
+
+      archive.pipe(output);
+      archive.directory(sourceFolderPath, false);
+      archive.finalize();
+    });
   }
 
   static groupByField(items, field) {

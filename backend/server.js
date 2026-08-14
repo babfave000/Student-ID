@@ -5,43 +5,30 @@ const dotenv = require('dotenv');
 const envPath = path.resolve(__dirname, '.env');
 const result = dotenv.config({ path: envPath });
 
-if (result.error) {
-  console.error('Error loading .env file from path:', envPath);
-  console.error('Error details:', result.error);
-} else {
-  console.log('.env file loaded successfully from:', envPath);
-  console.log('Parsed env vars (dotenv result):', Object.keys(result.parsed));
-  console.log('JWT_SECRET from process.env:', process.env.JWT_SECRET);
-  console.log('JWT_SECRET length:', process.env.JWT_SECRET?.length);
-  
-  // Log all env vars starting with 'JWT' or 'DB'
-  for (const key in process.env) {
-    if (key.startsWith('JWT') || key.startsWith('DB')) {
-      console.log(`${key}: '${process.env[key]}'`);
-    }
-  }
+if (result.error && process.env.NODE_ENV !== 'production') {
+  console.warn(`Could not load .env file from ${envPath}; falling back to process environment variables.`);
 }
 
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const fs = require('fs');
 
 const authRoutes = require('./routes/auth');
 const registrationRoutes = require('./routes/registrations');
 const adminRoutes = require('./routes/admin');
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
+const { ensureUploadsDir, uploadsDir } = require('./config/storage');
 const logger = require('./utils/logger');
 
 const app = express();
-const PORT = process.env.SERVER_PORT || 5000;
+const PORT = process.env.PORT || process.env.SERVER_PORT || 5000;
+const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-// Create uploads directory if it doesn't exist
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+ensureUploadsDir();
 
 // Middleware
 app.use(helmet({
@@ -50,9 +37,18 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] 
-    : ['http://localhost:3000', 'http://localhost:5173'],
+  origin: (origin, callback) => {
+    const devOrigins = ['http://localhost:3000', 'http://localhost:5173'];
+    const origins = process.env.NODE_ENV === 'production'
+      ? allowedOrigins
+      : [...new Set([...allowedOrigins, ...devOrigins])];
+
+    if (!origin || origins.length === 0 || origins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
@@ -68,7 +64,7 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 // API Routes
 app.use('/api/auth', authRoutes);
