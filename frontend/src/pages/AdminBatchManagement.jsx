@@ -160,14 +160,12 @@ const AdminBatchManagement = () => {
                 >
                   Back to Dashboard
                 </button>
-                {!hasIncomingSelection && (
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="btn-primary text-xs sm:text-sm px-3 sm:px-4"
-                  >
-                    Create New Batch
-                  </button>
-                )}
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="btn-primary text-xs sm:text-sm px-3 sm:px-4"
+                >
+                  Create New Batch
+                </button>
               </div>
             </div>
           </div>
@@ -193,7 +191,7 @@ const AdminBatchManagement = () => {
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Add Selected to Existing Batch</h2>
                 <p className="text-sm text-gray-600">
-                  {selectedRegistrations.length} approved registration(s) ready to be added to an existing unprinted batch.
+                  {selectedRegistrations.length} approved registration(s) ready to be added to an existing unprinted batch or included in a new batch.
                 </p>
               </div>
               <button
@@ -205,7 +203,7 @@ const AdminBatchManagement = () => {
             </div>
             {availableBatches.length === 0 && (
               <p className="text-sm text-amber-700 mt-4">
-                No existing unprinted batches are available. Create a new batch first if needed.
+                No existing unprinted batches are available. Use "Create New Batch" to continue with these selections.
               </p>
             )}
           </div>
@@ -223,14 +221,12 @@ const AdminBatchManagement = () => {
                 <p className="text-gray-600">
                   {hasIncomingSelection ? 'No existing unprinted batches are available yet' : 'No batches created yet'}
                 </p>
-                {!hasIncomingSelection && (
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="btn-primary mt-4"
-                  >
-                    Create First Batch
-                  </button>
-                )}
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="btn-primary mt-4"
+                >
+                  {hasIncomingSelection ? 'Create New Batch' : 'Create First Batch'}
+                </button>
               </div>
             ) : (
               batches.map((batch) => (
@@ -310,7 +306,7 @@ const AdminBatchManagement = () => {
           </div>
 
         {/* Create Batch Modal */}
-        {!hasIncomingSelection && showCreateModal && (
+        {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
