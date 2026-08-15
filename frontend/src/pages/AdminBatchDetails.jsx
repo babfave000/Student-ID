@@ -14,6 +14,27 @@ const AdminBatchDetails = () => {
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [error, setError] = useState('');
 
+  const extractDownloadErrorMessage = async (error) => {
+    const fallbackMessage = 'Failed to download batch package';
+    const responseData = error?.response?.data;
+
+    if (typeof responseData === 'string') {
+      return responseData;
+    }
+
+    if (responseData instanceof Blob) {
+      try {
+        const text = await responseData.text();
+        const parsed = JSON.parse(text);
+        return parsed?.error || fallbackMessage;
+      } catch (parseError) {
+        return fallbackMessage;
+      }
+    }
+
+    return error?.response?.data?.error || fallbackMessage;
+  };
+
   useEffect(() => {
     fetchBatchDetails();
   }, [id]);
@@ -68,18 +89,23 @@ const AdminBatchDetails = () => {
         responseType: 'blob'
       });
 
-      const url = URL.createObjectURL(response.data);
+      const contentDisposition = response.headers['content-disposition'];
+      const matchedFilename = contentDisposition?.match(/filename="?([^"]+)"?/i);
+      const downloadName = matchedFilename?.[1] || `${batch?.batch_name || 'batch'}.zip`;
+      const blob = response.data instanceof Blob ? response.data : new Blob([response.data], { type: 'application/zip' });
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${batch?.batch_name || 'batch'}.zip`;
+      a.download = downloadName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast.success('Batch package download started.');
     } catch (error) {
-      setError(error.response?.data?.error || 'Failed to download batch package');
-      toast.error(error.response?.data?.error || 'Failed to download batch package.');
+      const message = await extractDownloadErrorMessage(error);
+      setError(message);
+      toast.error(message);
     } finally {
       setDownloadingPackage(false);
     }
