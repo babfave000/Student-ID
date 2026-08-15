@@ -301,9 +301,16 @@ class BatchService {
       );
 
       let copiedPhotos = 0;
+      const missingPhotos = [];
+      const skippedRegistrations = [];
 
       for (const registration of registrations) {
         if (!registration.photo_path) {
+          skippedRegistrations.push({
+            registration_id: registration.id,
+            matric_no: registration.matric_no,
+            reason: 'No photo path is stored for this registration'
+          });
           continue;
         }
 
@@ -311,6 +318,12 @@ class BatchService {
 
         if (!sourcePath || !fs.existsSync(sourcePath)) {
           logger.error(`Photo file not found for registration ${registration.id}: ${sourcePath}`);
+          missingPhotos.push({
+            registration_id: registration.id,
+            matric_no: registration.matric_no,
+            photo_path: registration.photo_path,
+            reason: 'Photo file is not available on the server'
+          });
           continue;
         }
 
@@ -322,9 +335,21 @@ class BatchService {
         copiedPhotos++;
       }
 
-      if (copiedPhotos === 0) {
-        throw new Error('No student photos were found for this batch');
-      }
+      await fsp.writeFile(
+        path.join(batchFolderPath, `${sanitizedBatchName}-package-summary.json`),
+        JSON.stringify({
+          batch_id: batch.id,
+          batch_name: batch.batch_name,
+          registrations_in_batch: registrations.length,
+          copied_photos: copiedPhotos,
+          missing_photos: missingPhotos,
+          skipped_registrations: skippedRegistrations,
+          note: copiedPhotos === 0
+            ? 'This package contains the names report only because no photo files were available on the server at download time.'
+            : 'Some registration photos may be missing from this package if the files were not available on the server at download time.'
+        }, null, 2),
+        'utf8'
+      );
 
       await this.createZipArchive(batchFolderPath, zipPath);
 
