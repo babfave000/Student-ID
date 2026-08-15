@@ -1,7 +1,6 @@
 -- Seed data for Automated Student ID Card Registration, Batching, and Notification System
 -- Run this after creating the database schema
 
-USE student_id_system;
 
 -- Insert default admin users (password: admin123 - CHANGE IN PRODUCTION)
 INSERT IGNORE INTO staff_users (username, password_hash, full_name, email, role) VALUES

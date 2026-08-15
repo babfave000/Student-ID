@@ -1,9 +1,6 @@
 -- Database Schema for Automated Student ID Card Registration, Batching, and Notification System
 -- Generic Institution Version
 
--- Create database if it doesn't exist
---CREATE DATABASE IF NOT EXISTS student_id_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
---USE student_id_system;
 
 -- Students table - Core student information
 CREATE TABLE IF NOT EXISTS students (
