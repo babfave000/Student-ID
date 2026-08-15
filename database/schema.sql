@@ -1,7 +1,10 @@
 -- Database Schema for Automated Student ID Card Registration, Batching, and Notification System
 -- Generic Institution Version
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a949288b6d9531f3b4945c6e3f47dc417ca00a39
 -- Students table - Core student information
 CREATE TABLE IF NOT EXISTS students (
   id INT AUTO_INCREMENT PRIMARY KEY,
